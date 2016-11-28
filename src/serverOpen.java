@@ -10,6 +10,8 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.SftpException;
 
 public class serverOpen extends JFrame implements ActionListener, ItemListener {
 
@@ -18,10 +20,15 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	Panel buttons;
 	TextField details;
 	Button up, close;
-	String username,servername,password, SFTPWORKINGDIR;
+	String username,servername,password;
+	String SFTPWORKINGDIR="";
+	String WORKINGDIR;
 	int port;
 	String[] files;
 	File currentDir;
+	Vector filelist ;
+	ChannelSftp sftpChannel ;
+	
 	
 	 JSch jsch = new JSch();
 	 Session session = null;
@@ -32,6 +39,8 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		this.password=password;
 		this.servername=servername;
 		this.port=port;
+		this.SFTPWORKINGDIR=SFTPWORKINGDIR;
+		 WORKINGDIR=SFTPWORKINGDIR;
 		session = jsch.getSession(username, servername, port);
         session.setConfig("StrictHostKeyChecking", "no");
         session.setPassword(password);
@@ -39,20 +48,11 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 
         Channel channel = session.openChannel("sftp");
         channel.connect();
-        ChannelSftp sftpChannel = (ChannelSftp) channel;
+       sftpChannel = (ChannelSftp) channel;
         
-        sftpChannel.cd(SFTPWORKINGDIR);
-        Vector filelist = sftpChannel.ls(SFTPWORKINGDIR);
-        for(int i=0; i<filelist.size();i++){
-            LsEntry entry = (LsEntry) filelist.get(i);
-            System.out.println(entry.getFilename());
-            
-        }
         
-		}catch(Exception e)
-		{
-			System.out.println(e);
-		}
+        
+		
 	    list = new List(12, false); // Set up the list
 	    list.setFont(new Font("MonoSpaced", Font.PLAIN, 14));
 	    list.addActionListener(this);
@@ -74,12 +74,29 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    buttons.add(up); // Add buttons to button box
 	    buttons.add(close);
 
+	    
+	    sftpChannel.cd(SFTPWORKINGDIR);
+         filelist = sftpChannel.ls(SFTPWORKINGDIR);
+        System.out.println("entry.getFilename()");
+        for(int i=0; i<filelist.size();i++){
+            LsEntry entry = (LsEntry) filelist.get(i);
+            System.out.println(entry.getFilename());
+            list.add(entry.getFilename()); 
+        }
+	    
+    	System.out.println(SFTPWORKINGDIR);
 	    this.add(list, "Center"); // Add stuff to the window
 	    this.add(details, "North");
 	    this.add(buttons, "South");
 	    this.setSize(500, 350);
 	    this.setVisible(true);
-	    listDirectory();
+	    
+	    
+	    
+		}catch(Exception e)
+		{
+			System.out.println(e.getLocalizedMessage());
+		}
 		    
 	}
 	  public void listDirectory() {
@@ -116,18 +133,55 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
-	/*	if (e.getSource() == list) { // Double click on an item
+		if (e.getSource() == list) { // Double click on an item
 		      int i = list.getSelectedIndex(); // Check which item
 		      if (i == 0)
-		        
+		      {}
 		      else { // Otherwise, get filename
-		        String name = files[i - 1];
-		        File f = new File(currentDir, name); // Convert to a File
-		        String fullname = f.getAbsolutePath();
-		        if (f.isDirectory())
-		          listDirectory(fullname); // List dir
-		        else
-		          new FileViewer(fullname).show(); // display file*/
+		          try
+		          {
+		        	  LsEntry entry1 = (LsEntry) filelist.get(i);
+		          
+		            SftpATTRS attr = entry1.getAttrs();
+		            long length = attr.getSize();
+		            boolean isDir = attr.isDir();
+		            boolean isLink = attr.isLink();
+		       
+		        if (isDir){
+		        
+		        	SFTPWORKINGDIR=SFTPWORKINGDIR+"/"+entry1.getFilename();
+		        	System.out.println(SFTPWORKINGDIR);
+		        	 sftpChannel.cd(SFTPWORKINGDIR);
+		        	 
+		        	 filelist = sftpChannel.ls(SFTPWORKINGDIR);
+		             System.out.println("entry.getFilename()");
+		             for(int j=0; j<filelist.size();j++){
+		                 LsEntry entry = (LsEntry) filelist.get(j);
+		                 System.out.println(entry.getFilename());
+		                 //list.add(entry.getFilename()); 
+		             }
+		        	 
+		        	
+		        	list.removeAll();
+		        	
+		        	sftpChannel.cd(SFTPWORKINGDIR);
+		            filelist = sftpChannel.ls(SFTPWORKINGDIR);
+		           System.out.println("entry.getFilename()");
+		           for(int k=0; k<filelist.size();k++){
+		               LsEntry entry2 = (LsEntry) filelist.get(k);
+		               System.out.println(entry2.getFilename());
+		               list.add(entry2.getFilename()); 
+		           }
+		        	
+		        }
+		          }catch(Exception e1)
+		          {
+		        	  System.out.println(e1);
+		        	  SFTPWORKINGDIR="/home";
+		        	  
+		          }
 	}
 
+}
+	}
 }
