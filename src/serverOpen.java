@@ -137,7 +137,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    
 		}catch(Exception e)
 		{
-			System.out.println(e.getLocalizedMessage());
+			JOptionPane.showMessageDialog(null,e.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
 		}
 		    
 	}
@@ -196,7 +196,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		        }
 		          }catch(Exception e1)
 		          {
-		        	  System.out.println(e1);
+		        	  JOptionPane.showMessageDialog(null,e1.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
 		        	  
 						SFTPWORKINGDIR="/home";
 					
