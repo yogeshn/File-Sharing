@@ -1,9 +1,13 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.Vector;
 
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 
@@ -21,7 +25,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	List list;
 	Panel buttons;
 	TextField details;
-	Button up, download,reconnect,home;
+	Button up, download,reconnect,home,delete,newdir;
 	String username,servername,password;
 	String SFTPWORKINGDIR="";
 	String WORKINGDIR;
@@ -41,7 +45,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		this.password=password;
 		this.servername=servername;
 		this.port=port;
-		this.SFTPWORKINGDIR=SFTPWORKINGDIR;
+		
 		 WORKINGDIR=SFTPWORKINGDIR;
 		session = jsch.getSession(username, servername, port);
         session.setConfig("StrictHostKeyChecking", "no");
@@ -52,7 +56,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
         channel.connect();
        sftpChannel = (ChannelSftp) channel;
         
-        
+       this.SFTPWORKINGDIR=sftpChannel.getHome(); 
         
 		
 	    list = new List(12, false); // Set up the list
@@ -64,6 +68,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    details = new TextField(); // Set up the details area
 	    details.setFont(new Font("MonoSpaced", Font.PLAIN, 12));
 	    details.setEditable(false);
+	    details.setText(sftpChannel.getHome());
 	    JPanel jp=new JPanel();
 	    jp.setLayout(new BorderLayout());
 	    
@@ -75,13 +80,21 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    download = new Button("Download");
 	    reconnect=new Button("Reconnect");
 	    home=new Button("home");
-	    up.addActionListener(this);
-	    download.addActionListener(this);
+	    newdir=new Button("Create Folder");
+	    delete=new Button("delete");
 	    buttons.add(home);
 	    buttons.add(up); // Add buttons to button box
 	    buttons.add(download);
 	    buttons.add(reconnect);
-		    
+	    buttons.add(delete);
+	    buttons.add(newdir);
+		
+	    up.addActionListener(this);
+	    download.addActionListener(this);
+	    home.addActionListener(this);
+	    newdir.addActionListener(this);
+	    reconnect.addActionListener(this);
+	    delete.addActionListener(this);
 
 	    JToolBar jt=new JToolBar();
 	    jt.add(home);
@@ -89,6 +102,8 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    jt.addSeparator();
 	    jt.add(up);
 	    jt.add(download);
+	    jt.add(delete);
+	    jt.add(newdir);
 	    
 	   
 
@@ -101,8 +116,8 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    
 	   
 	    
-	    sftpChannel.cd(SFTPWORKINGDIR);
-         filelist = sftpChannel.ls(SFTPWORKINGDIR);
+	    sftpChannel.cd(sftpChannel.getHome());
+         filelist = sftpChannel.ls(sftpChannel.getHome());
         System.out.println("entry.getFilename()");
         for(int i=0; i<filelist.size();i++){
             LsEntry entry = (LsEntry) filelist.get(i);
@@ -110,7 +125,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
             list.add(entry.getFilename()); 
         }
 	    
-    	System.out.println(SFTPWORKINGDIR);
+    	
 	    this.add(list,"Center"); // Add stuff to the window
 	   // this.add(jt);
 	 //   this.add(details,"North");
@@ -126,31 +141,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		}
 		    
 	}
-	  public void listDirectory() {
-		    // Convert the string to a File object, and check that the dir exists
-		    File dir = new File(SFTPWORKINGDIR);
-		    if (!dir.isDirectory())
-		      throw new IllegalArgumentException("FileLister: no such directory");
-
-		    // Get the (filtered) directory entries
-		    files = dir.list();
-
-		    // Sort the list of filenames.
-		    java.util.Arrays.sort(files);
-
-		    // Remove any old entries in the list, and add the new ones
-		    list.removeAll();
-		    list.add("[Up to Parent Directory]"); // A special case entry
-		    for (int i = 0; i < files.length; i++)
-		      list.add(files[i]);
-
-		    // Display directory name in window titlebar and in the details box
-		    this.setTitle(SFTPWORKINGDIR);
-		    details.setText(SFTPWORKINGDIR);
-
-		    // Remember this directory for later.
-		    currentDir = dir;
-		  }
+	 
 	@Override
 	public void itemStateChanged(ItemEvent e) {
 		// TODO Auto-generated method stub
@@ -159,6 +150,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		System.out.println(e.getSource());
 		// TODO Auto-generated method stub
 		if (e.getSource() == list) { // Double click on an item
 		      int i = list.getSelectedIndex(); // Check which item
@@ -205,11 +197,142 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		          }catch(Exception e1)
 		          {
 		        	  System.out.println(e1);
-		        	  SFTPWORKINGDIR="/home";
 		        	  
+						SFTPWORKINGDIR="/home";
+					
 		          }
 	}
 
 }
+		
+		
+		
+		
+		
+		
+		if(e.getSource() == delete)
+		{
+		
+			try
+			{
+				int i = list.getSelectedIndex();
+				LsEntry entry1 = (LsEntry) filelist.get(i);
+		        SftpATTRS attr = entry1.getAttrs();
+	            boolean isDir = attr.isDir();
+	    	if(isDir)
+	    	{
+			sftpChannel.rmdir(list.getSelectedItem().toString());
+			JOptionPane.showMessageDialog(null,"Deleted","Sucess",JOptionPane.OK_OPTION);
+			
+        	list.removeAll();
+        	
+        	sftpChannel.cd(SFTPWORKINGDIR);
+            filelist = sftpChannel.ls(SFTPWORKINGDIR);
+           System.out.println("entry.getFilename()");
+           for(int k=0; k<filelist.size();k++){
+               LsEntry entry2 = (LsEntry) filelist.get(k);
+               System.out.println(entry2.getFilename());
+               list.add(entry2.getFilename()); 
+           }
+	    	}
+	    	else
+	    	{
+	    		sftpChannel.rm(list.getSelectedItem().toString());
+				JOptionPane.showMessageDialog(null,"Deleted","Sucess",JOptionPane.OK_OPTION);
+				
+	        	list.removeAll();
+	        	
+	        	sftpChannel.cd(SFTPWORKINGDIR);
+	            filelist = sftpChannel.ls(SFTPWORKINGDIR);
+	           System.out.println("entry.getFilename()");
+	           for(int k=0; k<filelist.size();k++){
+	               LsEntry entry2 = (LsEntry) filelist.get(k);
+	               System.out.println(entry2.getFilename());
+	               list.add(entry2.getFilename()); 
+	    	}
+	    	}
+			}catch(Exception delex)
+			{
+				JOptionPane.showMessageDialog(null,delex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		
+		
+		
+		if(e.getSource() == newdir)
+		{
+		
+			try
+			{
+				
+			sftpChannel.mkdir(JOptionPane.showInputDialog("Please enter folder name").toString());
+			JOptionPane.showMessageDialog(null,"New Folder Created","Sucess",JOptionPane.INFORMATION_MESSAGE);
+			
+        	list.removeAll();
+        	
+        	sftpChannel.cd(SFTPWORKINGDIR);
+            filelist = sftpChannel.ls(SFTPWORKINGDIR);
+           System.out.println("entry.getFilename()");
+           for(int k=0; k<filelist.size();k++){
+               LsEntry entry2 = (LsEntry) filelist.get(k);
+               System.out.println(entry2.getFilename());
+               list.add(entry2.getFilename()); 
+           }
+           
+           
+			}catch(Exception delex)
+			{
+				JOptionPane.showMessageDialog(null,delex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		
+		if(e.getSource()==up)
+		{
+			 try {  
+				 JFileChooser j = new JFileChooser();
+					j.setFileSelectionMode(JFileChooser.FILES_ONLY);
+					 j.showSaveDialog(this);
+		           String uploadFile= j.getSelectedFile().getAbsolutePath();
+		           System.out.println(uploadFile);
+		            File file = new File(uploadFile); 
+		            FileInputStream fileInputStream = new FileInputStream(file);
+		            sftpChannel.put(fileInputStream, file.getName());  
+		            fileInputStream.close();  
+		            fileInputStream=null; 
+		            JOptionPane.showMessageDialog(null,"Upload Complete","Sucess",JOptionPane.OK_OPTION);
+		            list.removeAll();
+		        	
+		        	sftpChannel.cd(SFTPWORKINGDIR);
+		            filelist = sftpChannel.ls(SFTPWORKINGDIR);
+		           System.out.println("entry.getFilename()");
+		           for(int k=0; k<filelist.size();k++){
+		               LsEntry entry2 = (LsEntry) filelist.get(k);
+		               System.out.println(entry2.getFilename());
+		               list.add(entry2.getFilename()); 
+		           }
+		        } catch (Exception eup) {  
+		            eup.printStackTrace();  
+		        }  
+		}
+		
+		if(e.getSource()==download)
+		{
+			try {  
+				JFileChooser j = new JFileChooser();
+				j.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				 j.showSaveDialog(this);
+				 System.out.println(j.getSelectedFile()+"/"+list.getSelectedItem());
+				 String saveFile=j.getSelectedFile()+"/"+list.getSelectedItem();
+				 File file = new File(saveFile);  
+	            FileOutputStream fileOutputStream =new FileOutputStream(file);  
+	            sftpChannel.get(list.getSelectedItem(), fileOutputStream );  
+	            fileOutputStream.close();  
+	            JOptionPane.showMessageDialog(null,"Download Complete","Sucess",JOptionPane.OK_OPTION);
+	            fileOutputStream=null;  
+	            file =null;  
+	        } catch (Exception ex) {  
+	        	JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+	        }  
+		}
 	}
 }
