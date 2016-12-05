@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.Vector;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JToolBar;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
@@ -19,7 +21,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	List list;
 	Panel buttons;
 	TextField details;
-	Button up, close;
+	Button up, download,reconnect,home;
 	String username,servername,password;
 	String SFTPWORKINGDIR="";
 	String WORKINGDIR;
@@ -57,23 +59,47 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    list.setFont(new Font("MonoSpaced", Font.PLAIN, 14));
 	    list.addActionListener(this);
 	    list.addItemListener(this);
+	    
 
 	    details = new TextField(); // Set up the details area
 	    details.setFont(new Font("MonoSpaced", Font.PLAIN, 12));
 	    details.setEditable(false);
-
+	    JPanel jp=new JPanel();
+	    jp.setLayout(new BorderLayout());
+	    
 	    buttons = new Panel(); // Set up the button box
-	    buttons.setLayout(new FlowLayout(FlowLayout.RIGHT, 15, 5));
+	    buttons.setLayout(new BorderLayout());
 	    buttons.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-	    up = new Button("Up a Directory"); // Set up the two buttons
-	    close = new Button("Close");
+	    up = new Button("Upload"); // Set up the two buttons
+	    download = new Button("Download");
+	    reconnect=new Button("Reconnect");
+	    home=new Button("home");
 	    up.addActionListener(this);
-	    close.addActionListener(this);
-
+	    download.addActionListener(this);
+	    buttons.add(home);
 	    buttons.add(up); // Add buttons to button box
-	    buttons.add(close);
+	    buttons.add(download);
+	    buttons.add(reconnect);
+		    
 
+	    JToolBar jt=new JToolBar();
+	    jt.add(home);
+	    jt.add(reconnect);
+	    jt.addSeparator();
+	    jt.add(up);
+	    jt.add(download);
+	    
+	   
+
+	   // jp.add(buttons,"Center");
+	    jp.add(details,"North");
+	    jp.add(jt,"South");
+	    
+	    
+	    
+	    
+	   
 	    
 	    sftpChannel.cd(SFTPWORKINGDIR);
          filelist = sftpChannel.ls(SFTPWORKINGDIR);
@@ -85,9 +111,10 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
         }
 	    
     	System.out.println(SFTPWORKINGDIR);
-	    this.add(list, "Center"); // Add stuff to the window
-	    this.add(details, "North");
-	    this.add(buttons, "South");
+	    this.add(list,"Center"); // Add stuff to the window
+	   // this.add(jt);
+	 //   this.add(details,"North");
+	    this.add(jp,"North");
 	    this.setSize(500, 350);
 	    this.setVisible(true);
 	    
@@ -151,8 +178,9 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		        
 		        	SFTPWORKINGDIR=SFTPWORKINGDIR+"/"+entry1.getFilename();
 		        	System.out.println(SFTPWORKINGDIR);
+		        	
 		        	 sftpChannel.cd(SFTPWORKINGDIR);
-		        	 
+		        	 details.setText(sftpChannel.pwd());
 		        	 filelist = sftpChannel.ls(SFTPWORKINGDIR);
 		             System.out.println("entry.getFilename()");
 		             for(int j=0; j<filelist.size();j++){
