@@ -3,6 +3,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.text.DecimalFormat;
 import java.util.Vector;
 
 import javax.swing.JFileChooser;
@@ -24,7 +25,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	TextArea textarea; 
 	List list;
 	Panel buttons;
-	TextField details;
+	TextField details,properties;
 	Button up, download,reconnect,home,delete,newdir;
 	String username,servername,password;
 	String SFTPWORKINGDIR="";
@@ -71,6 +72,10 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    details.setText(sftpChannel.getHome());
 	    JPanel jp=new JPanel();
 	    jp.setLayout(new BorderLayout());
+	    
+	    properties = new TextField(); // Set up the details area
+	    properties.setFont(new Font("MonoSpaced", Font.PLAIN, 12));
+	    properties.setEditable(false);
 	    
 	    buttons = new Panel(); // Set up the button box
 	    buttons.setLayout(new BorderLayout());
@@ -128,7 +133,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
     	
 	    this.add(list,"Center"); // Add stuff to the window
 	   // this.add(jt);
-	 //   this.add(details,"North");
+	   this.add(properties,"South");
 	    this.add(jp,"North");
 	    this.setSize(500, 350);
 	    this.setVisible(true);
@@ -145,7 +150,37 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	@Override
 	public void itemStateChanged(ItemEvent e) {
 		// TODO Auto-generated method stub
+		properties.setText("");
 		
+		int i = list.getSelectedIndex();
+		LsEntry entry1 = (LsEntry) filelist.get(i);
+        
+        SftpATTRS attr = entry1.getAttrs();
+        long length = attr.getSize();
+        boolean isDir = attr.isDir();
+        if(!isDir)
+        {
+        String hrSize = null;
+        long Kb = length/1024;
+        long Mb = Kb / 1024;
+        long Gb = Mb / 1024;
+        long Tb = Gb / 1024;
+        DecimalFormat dec = new DecimalFormat("0.00");
+        if ( Tb>1 ) {
+            hrSize = dec.format(Tb).concat(" TB");
+        } else if ( Gb>1 ) {
+            hrSize = dec.format(Gb).concat(" GB");
+        } else if ( Mb>1 ) {
+            hrSize = dec.format(Mb).concat(" MB");
+        } else if ( Kb>1 ) {
+            hrSize = dec.format(Kb).concat(" KB");
+        } else {
+            hrSize = dec.format(length).concat(" Bytes");
+        }
+
+       
+   properties.setText(hrSize);
+        }
 	}
 
 	@Override
@@ -154,9 +189,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		// TODO Auto-generated method stub
 		if (e.getSource() == list) { // Double click on an item
 		      int i = list.getSelectedIndex(); // Check which item
-		      if (i == 0)
-		      {}
-		      else { // Otherwise, get filename
+		     
 		          try
 		          {
 		        	  LsEntry entry1 = (LsEntry) filelist.get(i);
@@ -164,8 +197,8 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		            SftpATTRS attr = entry1.getAttrs();
 		            long length = attr.getSize();
 		            boolean isDir = attr.isDir();
-		            boolean isLink = attr.isLink();
-		       
+		          
+		        
 		        if (isDir){
 		        
 		        	SFTPWORKINGDIR=SFTPWORKINGDIR+"/"+entry1.getFilename();
@@ -201,7 +234,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 						SFTPWORKINGDIR="/home";
 					
 		          }
-	}
+	
 
 }
 		
@@ -221,8 +254,12 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	            boolean isDir = attr.isDir();
 	    	if(isDir)
 	    	{
-			sftpChannel.rmdir(list.getSelectedItem().toString());
-			JOptionPane.showMessageDialog(null,"Deleted","Sucess",JOptionPane.OK_OPTION);
+	    		int dialogResult = JOptionPane.showConfirmDialog (null, "Confirm Delete "+list.getSelectedItem(),"Warning",JOptionPane.YES_NO_OPTION);
+	    		if(dialogResult == JOptionPane.YES_OPTION){
+	    			sftpChannel.rmdir(list.getSelectedItem().toString());
+	    			JOptionPane.showMessageDialog(null,"Deleted","Sucess",JOptionPane.OK_OPTION);
+	    		}
+			
 			
         	list.removeAll();
         	
@@ -237,8 +274,13 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    	}
 	    	else
 	    	{
-	    		sftpChannel.rm(list.getSelectedItem().toString());
-				JOptionPane.showMessageDialog(null,"Deleted","Sucess",JOptionPane.OK_OPTION);
+	    		int dialogResult = JOptionPane.showConfirmDialog (null, "Confirm Delete "+list.getSelectedItem(),"Warning",JOptionPane.YES_NO_OPTION);
+	    		if(dialogResult == JOptionPane.YES_OPTION){
+	    			sftpChannel.rm(list.getSelectedItem().toString());
+					JOptionPane.showMessageDialog(null,"Deleted","Sucess",JOptionPane.OK_OPTION);
+	    		}
+			
+	    		
 				
 	        	list.removeAll();
 	        	
