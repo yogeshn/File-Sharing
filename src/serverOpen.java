@@ -30,7 +30,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	Panel buttons;
 	TextField details,properties;
 	Button up, download,reconnect,home,delete,newdir;
-	String username,servername,password;
+	String username,servername,password,key;
 	String SFTPWORKINGDIR="";
 	String WORKINGDIR;
 	int port;
@@ -166,20 +166,20 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	
 	
 	
-	public serverOpen(String username,String servername,int port,String password) {
+	public serverOpen(String username,String servername,int port,String key) {
 		// TODO Auto-generated constructor stub
 		try{
 		this.username=username;
-		this.password=password;
+		this.key=key;
 		this.servername=servername;
 		this.port=port;
 		
-		 
+		jsch.addIdentity(key);
 		session = jsch.getSession(username, servername, port);
         session.setConfig("StrictHostKeyChecking", "no");
       
         session.connect();
-        jsch.addIdentity(password);
+        
         Channel channel = session.openChannel("sftp");
         channel.connect();
        sftpChannel = (ChannelSftp) channel;
@@ -506,7 +506,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		            sftpChannel.put(fileInputStream, file.getName());  
 		            fileInputStream.close();  
 		            fileInputStream=null; 
-		            JOptionPane.showMessageDialog(null,"Upload Complete","Sucess",JOptionPane.OK_OPTION);
+		            JOptionPane.showMessageDialog(null,"Upload Complete","Sucess",JOptionPane.INFORMATION_MESSAGE);
 		            list.removeAll();
 		        	
 		        	sftpChannel.cd(SFTPWORKINGDIR);
@@ -532,22 +532,33 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		
 		if(e.getSource()==download)
 		{
+			int i = list.getSelectedIndex();
+			LsEntry entry1 = (LsEntry) filelist.get(i);
+	        SftpATTRS attr = entry1.getAttrs();
+            boolean isDir = attr.isDir();
+    	if(!isDir)
+    	{
 			try {  
 				JFileChooser j = new JFileChooser();
 				j.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 				 j.showSaveDialog(this);
-				 System.out.println(j.getSelectedFile()+"/"+list.getSelectedItem());
-				 String saveFile=j.getSelectedFile()+"/"+list.getSelectedItem();
-				 File file = new File(saveFile);  
+				 System.out.println(j.getSelectedFile()+"/"+list.getSelectedItem().substring(1, list.getSelectedItem().length()));
+				 String saveFile=j.getSelectedFile()+"/"+list.getSelectedItem().substring(1, list.getSelectedItem().length());
+				 File file = new File(saveFile);
+				 System.out.println(saveFile);
 	            FileOutputStream fileOutputStream =new FileOutputStream(file);  
-	            sftpChannel.get(list.getSelectedItem(), fileOutputStream );  
+	            sftpChannel.get(list.getSelectedItem().substring(1, list.getSelectedItem().length()), fileOutputStream );  
 	            fileOutputStream.close();  
-	            JOptionPane.showMessageDialog(null,"Download Complete","Sucess",JOptionPane.OK_OPTION);
+	            JOptionPane.showMessageDialog(null,"Download Complete","Sucess",JOptionPane.INFORMATION_MESSAGE);
 	            fileOutputStream=null;  
 	            file =null;  
 	        } catch (Exception ex) {  
 	        	JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
 	        }  
+    	}
+    	else {
+    		JOptionPane.showMessageDialog(null,"Cannot download ","Error",JOptionPane.ERROR_MESSAGE);
+		}
 		}
 		
 		if(e.getSource() == home)
@@ -555,7 +566,9 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 			try
 			{
 				list.removeAll();
+				SFTPWORKINGDIR=sftpChannel.getHome();
 			    sftpChannel.cd(sftpChannel.getHome());
+			    System.out.println(sftpChannel.getHome());
 		         filelist = sftpChannel.ls(sftpChannel.getHome());
 		         
 		         details.setText(sftpChannel.pwd());

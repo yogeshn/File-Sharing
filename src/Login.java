@@ -20,6 +20,7 @@ public class Login extends JFrame implements ActionListener {
 	 JPanel jp1,jp2;
 	 JSch jsch = new JSch();
 	 Session session = null;
+	 String pkey;
 	 
 	 
 	Login()
@@ -198,14 +199,21 @@ public class Login extends JFrame implements ActionListener {
 			j.showOpenDialog(this);
 			
 			txt4.setText(j.getSelectedFile().getName());
+			pkey=j.getSelectedFile().getAbsolutePath();
+			System.out.println(pkey);
 			
+		}
+		
+		if(ae.getSource()==bt4)
+		{
+
 			try
 			{
 				String username=txt3.getText().toString();
 				String servername=txt1.getText().toString();
 				int port=Integer.parseInt(txt2.getText());
-				String password=j.getSelectedFile().getAbsolutePath();
-				
+				String password=pkey;
+				System.out.println(password);
 				 session = jsch.getSession(username, servername, port);
 		            session.setConfig("StrictHostKeyChecking", "no");
 		           jsch.addIdentity(password);
@@ -219,7 +227,7 @@ public class Login extends JFrame implements ActionListener {
 		            
 		            
 		              String SFTPWORKINGDIR = "/home"+"/"+txt3.getText().toString().toLowerCase();
-		              serverOpen so=new serverOpen(username,servername,port,password);
+		              serverOpen so=new serverOpen(username,servername,port,pkey);
 		             
 		            this.dispose();
 		         
