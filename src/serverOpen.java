@@ -93,7 +93,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    buttons.add(home);
 	    buttons.add(up); // Add buttons to button box
 	    buttons.add(download);
-	    buttons.add(reconnect);
+	   // buttons.add(reconnect);
 	    buttons.add(delete);
 	    buttons.add(newdir);
 		
@@ -101,12 +101,12 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    download.addActionListener(this);
 	    home.addActionListener(this);
 	    newdir.addActionListener(this);
-	    reconnect.addActionListener(this);
+	    //reconnect.addActionListener(this);
 	    delete.addActionListener(this);
 
 	    JToolBar jt=new JToolBar();
 	    jt.add(home);
-	    jt.add(reconnect);
+	   // jt.add(reconnect);
 	    jt.addSeparator();
 	    jt.add(up);
 	    jt.add(download);
@@ -160,6 +160,135 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		    
 	}
 	 
+	
+	
+	
+	
+	
+	
+	public serverOpen(String username,String servername,int port,String password) {
+		// TODO Auto-generated constructor stub
+		try{
+		this.username=username;
+		this.password=password;
+		this.servername=servername;
+		this.port=port;
+		
+		 
+		session = jsch.getSession(username, servername, port);
+        session.setConfig("StrictHostKeyChecking", "no");
+      
+        session.connect();
+        jsch.addIdentity(password);
+        Channel channel = session.openChannel("sftp");
+        channel.connect();
+       sftpChannel = (ChannelSftp) channel;
+        
+       this.SFTPWORKINGDIR=sftpChannel.getHome(); 
+       WORKINGDIR=SFTPWORKINGDIR;
+		
+	    list = new List(12, false); // Set up the list
+	    list.setFont(new Font("MonoSpaced", Font.PLAIN, 14));
+	    list.addActionListener(this);
+	    list.addItemListener(this);
+	    
+
+	    details = new TextField(); // Set up the details area
+	    details.setFont(new Font("MonoSpaced", Font.PLAIN, 12));
+	    details.setEditable(false);
+	    details.setText(sftpChannel.getHome());
+	    JPanel jp=new JPanel();
+	    jp.setLayout(new BorderLayout());
+	    
+	    properties = new TextField(); // Set up the details area
+	    properties.setFont(new Font("MonoSpaced", Font.PLAIN, 12));
+	    properties.setEditable(false);
+	    
+	    buttons = new Panel(); // Set up the button box
+	    buttons.setLayout(new BorderLayout());
+	    buttons.setFont(new Font("SansSerif", Font.BOLD, 14));
+
+	    up = new Button("Upload"); // Set up the two buttons
+	    download = new Button("Download");
+	    reconnect=new Button("Reconnect");
+	    home=new Button("home");
+	    newdir=new Button("Create Folder");
+	    delete=new Button("delete");
+	    buttons.add(home);
+	    buttons.add(up); // Add buttons to button box
+	    buttons.add(download);
+	    //buttons.add(reconnect);
+	    buttons.add(delete);
+	    buttons.add(newdir);
+		
+	    up.addActionListener(this);
+	    download.addActionListener(this);
+	    home.addActionListener(this);
+	    newdir.addActionListener(this);
+	   // reconnect.addActionListener(this);
+	    delete.addActionListener(this);
+
+	    JToolBar jt=new JToolBar();
+	    jt.add(home);
+	    //jt.add(reconnect);
+	    jt.addSeparator();
+	    jt.add(up);
+	    jt.add(download);
+	    jt.add(delete);
+	    jt.add(newdir);
+	    
+	   
+
+	   // jp.add(buttons,"Center");
+	    jp.add(details,"North");
+	    jp.add(jt,"South");
+	    
+	    
+	    
+	    
+	   
+	    
+	    sftpChannel.cd(sftpChannel.getHome());
+         filelist = sftpChannel.ls(sftpChannel.getHome());
+         
+       ImageIcon io=new ImageIcon("images/folder.png");
+        for(int i=1; i<filelist.size();i++){
+            LsEntry entry = (LsEntry) filelist.get(i);
+            SftpATTRS attr = entry.getAttrs();
+            boolean isDir = attr.isDir();
+            details.setText(sftpChannel.pwd());
+            System.out.println(entry.getFilename());
+            if(isDir)
+            {
+            list.add(entry.getFilename()); 
+            }
+            else {
+            	list.add("-"+entry.getFilename()); 
+			}
+        }
+	    
+   
+	    this.add(list,"Center"); // Add stuff to the window
+	   // this.add(jt);
+	   this.add(properties,"South");
+	    this.add(jp,"North");
+	    this.setSize(500, 350);
+	    this.setVisible(true);
+	    
+	    
+	    
+		}catch(Exception e)
+		{
+			JOptionPane.showMessageDialog(null,e.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+		}
+		    
+	}
+	
+	
+	
+	
+	
+	
 	@Override
 	public void itemStateChanged(ItemEvent e) {
 		// TODO Auto-generated method stub
@@ -369,7 +498,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 			 try {  
 				 JFileChooser j = new JFileChooser();
 					j.setFileSelectionMode(JFileChooser.FILES_ONLY);
-					 j.showSaveDialog(this);
+					 j.showOpenDialog(this);
 		           String uploadFile= j.getSelectedFile().getAbsolutePath();
 		           System.out.println(uploadFile);
 		            File file = new File(uploadFile); 
