@@ -6,11 +6,14 @@ import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 import java.util.Vector;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
+import javax.swing.UIManager;
+import javax.swing.filechooser.FileView;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
@@ -123,14 +126,24 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	    
 	    sftpChannel.cd(sftpChannel.getHome());
          filelist = sftpChannel.ls(sftpChannel.getHome());
-        System.out.println("entry.getFilename()");
-        for(int i=0; i<filelist.size();i++){
+         
+       ImageIcon io=new ImageIcon("images/folder.png");
+        for(int i=1; i<filelist.size();i++){
             LsEntry entry = (LsEntry) filelist.get(i);
+            SftpATTRS attr = entry.getAttrs();
+            boolean isDir = attr.isDir();
+            details.setText(sftpChannel.pwd());
             System.out.println(entry.getFilename());
+            if(isDir)
+            {
             list.add(entry.getFilename()); 
+            }
+            else {
+            	list.add("-"+entry.getFilename()); 
+			}
         }
 	    
-    	
+   
 	    this.add(list,"Center"); // Add stuff to the window
 	   // this.add(jt);
 	   this.add(properties,"South");
@@ -185,10 +198,11 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		int len=0;
 		System.out.println(e.getSource());
 		// TODO Auto-generated method stub
 		if (e.getSource() == list) { // Double click on an item
-		      int i = list.getSelectedIndex(); // Check which item
+		      int i = list.getSelectedIndex()+1; // Check which item
 		     
 		          try
 		          {
@@ -200,39 +214,35 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		          
 		        
 		        if (isDir){
-		        
+		        len=entry1.getFilename().length();
+		        	WORKINGDIR=SFTPWORKINGDIR;
 		        	SFTPWORKINGDIR=SFTPWORKINGDIR+"/"+entry1.getFilename();
 		        	System.out.println(SFTPWORKINGDIR);
 		        	
 		        	 sftpChannel.cd(SFTPWORKINGDIR);
 		        	 details.setText(sftpChannel.pwd());
 		        	 filelist = sftpChannel.ls(SFTPWORKINGDIR);
-		             System.out.println("entry.getFilename()");
-		             for(int j=0; j<filelist.size();j++){
-		                 LsEntry entry = (LsEntry) filelist.get(j);
-		                 System.out.println(entry.getFilename());
-		                 //list.add(entry.getFilename()); 
-		             }
-		        	 
-		        	
-		        	list.removeAll();
-		        	
-		        	sftpChannel.cd(SFTPWORKINGDIR);
-		            filelist = sftpChannel.ls(SFTPWORKINGDIR);
-		           System.out.println("entry.getFilename()");
-		           for(int k=0; k<filelist.size();k++){
+		        	 list.removeAll();
+		          
+		           for(int k=1; k<filelist.size();k++){
 		               LsEntry entry2 = (LsEntry) filelist.get(k);
+		               SftpATTRS attr2 = entry2.getAttrs();
+		               boolean isDir2 = attr2.isDir();
 		               System.out.println(entry2.getFilename());
+		               if(isDir2)
+		               {
 		               list.add(entry2.getFilename()); 
+		               }
+		               else {
+		               	list.add("-"+entry2.getFilename()); 
+		   			}
 		           }
 		        	
 		        }
 		          }catch(Exception e1)
 		          {
 		        	  JOptionPane.showMessageDialog(null,e1.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
-		        	  
-						SFTPWORKINGDIR="/home";
-					
+		        	  SFTPWORKINGDIR=WORKINGDIR;
 		          }
 	
 
@@ -266,10 +276,19 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
         	sftpChannel.cd(SFTPWORKINGDIR);
             filelist = sftpChannel.ls(SFTPWORKINGDIR);
            System.out.println("entry.getFilename()");
-           for(int k=0; k<filelist.size();k++){
+           for(int k=1; k<filelist.size();k++){
                LsEntry entry2 = (LsEntry) filelist.get(k);
+               SftpATTRS attr2 = entry2.getAttrs();
+	            boolean isDir2 = attr2.isDir();
                System.out.println(entry2.getFilename());
+               if(isDir2)
+               {
                list.add(entry2.getFilename()); 
+               }
+               else {
+               	list.add("-"+entry2.getFilename()); 
+   			}
+               
            }
 	    	}
 	    	else
@@ -289,8 +308,16 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	           System.out.println("entry.getFilename()");
 	           for(int k=0; k<filelist.size();k++){
 	               LsEntry entry2 = (LsEntry) filelist.get(k);
+	               SftpATTRS attr2 = entry2.getAttrs();
+		            boolean isDir2 = attr2.isDir();
 	               System.out.println(entry2.getFilename());
+	               if(isDir)
+	               {
 	               list.add(entry2.getFilename()); 
+	               }
+	               else {
+	               	list.add("-"+entry2.getFilename()); 
+	   			}
 	    	}
 	    	}
 			}catch(Exception delex)
@@ -303,6 +330,7 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		
 		if(e.getSource() == newdir)
 		{
+			
 		
 			try
 			{
@@ -317,8 +345,16 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
            System.out.println("entry.getFilename()");
            for(int k=0; k<filelist.size();k++){
                LsEntry entry2 = (LsEntry) filelist.get(k);
+               SftpATTRS attr = entry2.getAttrs();
+               boolean isDir = attr.isDir();
                System.out.println(entry2.getFilename());
+               if(isDir)
+               {
                list.add(entry2.getFilename()); 
+               }
+               else {
+               	list.add("-"+entry2.getFilename()); 
+   			}
            }
            
            
@@ -349,8 +385,16 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 		           System.out.println("entry.getFilename()");
 		           for(int k=0; k<filelist.size();k++){
 		               LsEntry entry2 = (LsEntry) filelist.get(k);
+		               SftpATTRS attr = entry2.getAttrs();
+		               boolean isDir = attr.isDir();
 		               System.out.println(entry2.getFilename());
+		               if(isDir)
+		               {
 		               list.add(entry2.getFilename()); 
+		               }
+		               else {
+		               	list.add("-"+entry2.getFilename()); 
+		   			}
 		           }
 		        } catch (Exception eup) {  
 		            eup.printStackTrace();  
@@ -376,5 +420,35 @@ public class serverOpen extends JFrame implements ActionListener, ItemListener {
 	        	JOptionPane.showMessageDialog(null,ex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
 	        }  
 		}
+		
+		if(e.getSource() == home)
+		{
+			try
+			{
+				list.removeAll();
+			    sftpChannel.cd(sftpChannel.getHome());
+		         filelist = sftpChannel.ls(sftpChannel.getHome());
+		         
+		         details.setText(sftpChannel.pwd());
+		        for(int i=1; i<filelist.size();i++){
+		            LsEntry entry = (LsEntry) filelist.get(i);
+		            SftpATTRS attr = entry.getAttrs();
+		            boolean isDir = attr.isDir();
+		            
+		            if(isDir)
+		            {
+		            list.add(entry.getFilename()); 
+		            }
+		            else {
+		            	list.add("-"+entry.getFilename()); 
+					}
+		        }	
+			}catch(Exception h1)
+			{
+				System.out.println(h1);
+			}
+			
+		}
+		
 	}
 }

@@ -110,13 +110,7 @@ public class Login extends JFrame implements ActionListener {
 		            
 		              String SFTPWORKINGDIR = "/home"+"/"+txt3.getText().toString().toLowerCase();
 		              serverOpen so=new serverOpen(username,servername,port,password,SFTPWORKINGDIR);
-		             /*
-		              sftpChannel.cd(SFTPWORKINGDIR);
-            Vector filelist = sftpChannel.ls(SFTPWORKINGDIR);
-            for(int i=0; i<filelist.size();i++){
-                LsEntry entry = (LsEntry) filelist.get(i);
-                System.out.println(entry.getFilename());
-            } */
+		             
 		            this.dispose();
 		         
 		        
@@ -124,8 +118,8 @@ public class Login extends JFrame implements ActionListener {
 				}
 			 catch (JSchException e) {
 	             
-				 JOptionPane.showMessageDialog(null,"User Does not Exists.","Error",JOptionPane.ERROR_MESSAGE);
-	                txt1.setText("");
+				 JOptionPane.showMessageDialog(null,"Error connecing to the remote server","Error",JOptionPane.ERROR_MESSAGE);
+	               
 	                pass.setText("");
 	        }/* catch (SftpException e) {
 	            e.printStackTrace();
